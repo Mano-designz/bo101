@@ -268,48 +268,374 @@ Ideal Quantum Circuit
         │
         ▼
    Final Output
-```
+# System Architecture
+
+Our solution follows a hybrid classical-quantum optimization architecture for
+integrated Electric Vehicle (EV) fleet scheduling and electrical-grid
+management.
+
+The complete workflow transforms the real-world EV + Grid optimization problem
+into a binary mathematical optimization problem, formulates it as a QUBO, and
+then solves the same optimization problem through both classical and quantum
+approaches for a fair comparison.
+
+---
+
+## 1. EV + Grid Problem
+
+The system addresses the combined optimization problem involving:
+
+- EV scheduling
+- Charging decisions
+- Depot assignment
+- Grid-load management
+- Vehicle-to-Grid (V2G) operation
+- Operational cost
+- Energy constraints
+
+The goal is to determine a feasible EV schedule while minimizing the overall
+optimization objective and reducing undesirable grid-load peaks.
+
+---
+
+## 2. Mathematical Model
+
+The real-world problem is first converted into a mathematical optimization
+model.
+
+The model defines:
+
+- EV fleet
+- Time slots
+- Charging decisions
+- Depot assignments
+- Energy requirements
+- Battery/SOC constraints
+- Grid-load conditions
+- V2G decisions
+- Optimization objectives
+
+This mathematical representation forms the foundation for both the classical
+and quantum solution branches.
+
+---
+
+## 3. Decision Variables
+
+Binary decision variables represent the choices made by the optimization
+system.
+
+Examples include:
+
+- Whether an EV charges during a particular time slot
+- Which depot an EV is assigned to
+- Whether an EV participates in a particular scheduling decision
+- Whether an EV performs V2G discharge during a particular time slot
+
+Binary variables allow the optimization problem to be represented in a form
+that can be converted into a QUBO.
+
+---
+
+## 4. Constraints
+
+The optimization must satisfy several constraints.
+
+### Energy Constraints
+
+EVs must receive the required amount of energy for their operation.
+
+### Depot Constraints
+
+Each EV must satisfy the required depot-assignment conditions.
+
+### Battery / SOC Constraints
+
+Charging and V2G decisions must respect the available battery energy and
+state-of-charge limitations.
+
+### Grid Constraints
+
+Charging decisions must account for the available grid capacity and avoid
+undesirable grid-load conditions.
+
+Constraints are incorporated into the optimization model through penalty
+terms when constructing the QUBO.
+
+---
+
+## 5. Objective Function
+
+The objective function represents what the optimization system is trying to
+minimize.
+
+The objective can combine factors such as:
+
+- Charging/energy cost
+- Grid peak-load penalty
+- Depot-related cost
+- V2G-related economic objectives
+- Constraint-violation penalties
+
+The resulting optimization problem seeks a solution that balances EV
+operational requirements with grid and economic objectives.
+
+---
+
+## 6. QUBO Formulation
+
+The mathematical optimization problem is converted into a Quadratic
+Unconstrained Binary Optimization (QUBO) formulation.
+
+The QUBO is represented as:
+
+xᵀ Q x + offset
+
+where:
+
+- `x` is the vector of binary decision variables
+- `Q` is the QUBO matrix
+- `offset` is a constant contribution to the objective
+
+Constraints are transformed into penalty terms so that infeasible solutions
+receive a higher QUBO energy.
+
+This creates a single binary optimization representation that can be used by
+both classical and quantum optimization approaches.
+
+---
+
+# 7. Hybrid Classical-Quantum Architecture
+
+After constructing the QUBO, the system branches into two solution paths.
+
+## Classical Branch
+
+The classical branch provides optimization baselines against which the
+quantum approach can be evaluated.
+
+### OR-Tools CP-SAT
+
+OR-Tools CP-SAT is used as a classical constraint-based optimization
+approach.
+
+It searches for high-quality or optimal solutions using classical
+optimization techniques.
+
+### Greedy Heuristic
+
+A greedy approach provides a lightweight heuristic baseline.
+
+It makes locally beneficial decisions without performing the complete
+optimization search.
+
+### Simulated Annealing
+
+Simulated annealing provides another classical optimization strategy based on
+probabilistic exploration of the solution space.
+
+### Brute Force
+
+For small problem instances, brute force can enumerate possible binary
+solutions.
+
+This provides a useful reference for validating the QUBO formulation and
+checking whether the optimization implementations produce the expected
+solution.
+
+---
+
+# 8. Quantum Branch
+
+The quantum branch uses the QUBO as the input optimization representation.
+
+The workflow is:
+
+QUBO → Ising Hamiltonian → QAOA → Measurement → Solution Decoding
+
+---
+
+## 8.1 QUBO to Ising Conversion
+
+The binary QUBO variables are mapped to quantum operators.
+
+The QUBO is transformed into an Ising Hamiltonian that can be implemented as
+a quantum cost Hamiltonian.
+
+This allows the original binary optimization problem to be represented in a
+form suitable for QAOA.
+
+---
+
+## 8.2 QAOA
+
+The Quantum Approximate Optimization Algorithm (QAOA) is used as the primary
+quantum optimization method.
+
+QAOA alternates between two types of quantum operations:
+
+### Cost Hamiltonian
+
+The cost Hamiltonian encodes the optimization problem.
+
+It assigns different energies to candidate solutions based on their QUBO
+objective values.
+
+### Mixer Hamiltonian
+
+The mixer Hamiltonian allows the quantum state to explore different
+candidate configurations.
+
+The QAOA circuit therefore follows the general structure:
+
+Initial State
+      ↓
+Cost Hamiltonian
+      ↓
+Mixer Hamiltonian
+      ↓
+Cost Hamiltonian
+      ↓
+Mixer Hamiltonian
+      ↓
+...
+      ↓
+Measurement
+
+The QAOA parameters are optimized using a classical optimizer.
+
+This makes QAOA a hybrid quantum-classical algorithm.
+
+---
+
+# 9. Qiskit Implementation
+
+The quantum branch is implemented using Qiskit.
+
+The implementation contains separate components for:
+
+- Quantum circuit construction
+- QUBO-to-Ising conversion
+- QAOA optimization
+- Solution decoding
+- Quantum result analysis
+
+Qiskit Aer is used for quantum circuit simulation.
+
+This allows the algorithm to be tested before execution on real quantum
+hardware.
+
+---
+
+# 10. Noise Analysis
+
+Real quantum hardware is affected by noise and imperfections.
+
+Therefore, the project evaluates QAOA under simulated noisy conditions.
+
+The noise analysis investigates how factors such as circuit depth and
+quantum errors affect the quality of the obtained solutions.
+
+This provides a more realistic evaluation than testing only ideal quantum
+circuits.
+
+---
+
+# 11. Zero-Noise Extrapolation (ZNE)
+
+Zero-Noise Extrapolation is investigated as an error-mitigation technique.
+
+The general idea is to execute the circuit under different effective noise
+levels and use the resulting measurements to estimate the corresponding
+zero-noise result.
+
+This allows the project to investigate whether error mitigation can improve
+the quality of QAOA results under noisy simulation.
+
+---
+
+# 12. Benchmarking
+
+The classical and quantum approaches are evaluated using the same underlying
+optimization problem.
+
+Important evaluation metrics include:
+
+| Metric | Purpose |
+|---|---|
+| Objective / Cost | Measures overall optimization quality |
+| Peak Grid Load | Measures grid-load management |
+| V2G Performance | Measures effectiveness of V2G decisions |
+| Feasibility | Checks whether constraints are satisfied |
+| Solution Probability | Measures how frequently QAOA samples good solutions |
+| Runtime | Compares computational effort |
+| Noise Sensitivity | Measures degradation under noise |
+| Circuit Depth | Measures quantum circuit complexity |
+
+The comparison focuses on solution quality and practical behavior rather than
+assuming that the quantum method is automatically superior.
+
+---
+
+# 13. Final Analysis
+
+The final stage compares the classical and quantum approaches.
+
+The analysis considers:
+
+- Solution quality
+- Constraint feasibility
+- Grid-load reduction
+- V2G behavior
+- Computational/runtime characteristics
+- QAOA performance
+- Noise sensitivity
+- Effect of circuit depth
+- Scalability with increasing problem size
+
+The objective is to determine where the quantum approach performs well, where
+classical methods remain stronger, and what limitations currently affect the
+quantum implementation.
+
+---
+
+# 14. End-to-End Pipeline
+
+The complete system can therefore be summarized as:
+
 EV + GRID PROBLEM
-                        │
-                        ▼
-              Mathematical Model
-                        │
-          ┌─────────────┴─────────────┐
-          │                           │
-    Decision Variables           Constraints
-          │                           │
-          └─────────────┬─────────────┘
-                        ▼
-                 Objective Function
-                        │
-                        ▼
-                      QUBO
-                xᵀ Q x + offset
-                        │
-             ┌──────────┴──────────┐
-             │                     │
-      Classical Branch        Quantum Branch
-             │                     │
-      OR-Tools CP-SAT          QUBO → Ising
-      Greedy Heuristic              │
-      Simulated Annealing            ▼
-      Brute Force               QAOA Circuit
-             │                     │
-             │               H → Cost → Mixer
-             │                     │
-             │                     ▼
-             │                 Qiskit Aer
-             │                     │
-             │              Noise / ZNE
-             │                     │
-             └──────────┬──────────┘
-                        ▼
-                  Benchmarking
-                        │
-                        ▼
-             Cost / Peak / V2G /
-          Feasibility / Probability /
-             Runtime / Noise
+        ↓
+MATHEMATICAL MODEL
+        ↓
+DECISION VARIABLES + CONSTRAINTS
+        ↓
+OBJECTIVE FUNCTION
+        ↓
+QUBO
+        ↓
+┌───────────────────────┬────────────────────────┐
+│                       │                        │
+▼                       ▼                        │
+CLASSICAL               QUANTUM                  │
+│                       │                        │
+├─ OR-Tools CP-SAT      ├─ QUBO → Ising          │
+├─ Greedy               ├─ QAOA                  │
+├─ Simulated Annealing  ├─ Qiskit Aer            │
+└─ Brute Force          └─ Noise + ZNE            │
+│                       │                        │
+└───────────────┬───────┘                        │
+                ▼                                │
+          BENCHMARKING                           │
+                ↓                                │
+     COST / PEAK / V2G                           │
+     FEASIBILITY / PROBABILITY                   │
+     RUNTIME / NOISE                             │
+                ↓                                │
+        FINAL COMPARISON                         │
+                ↓                                │
+      CLASSICAL vs QUANTUM                       │
+
+```
 
 Understanding this gap between **ideal simulation** and **real-world quantum computation** is essential when evaluating quantum ML systems.
 
