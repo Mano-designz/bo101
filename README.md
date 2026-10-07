@@ -269,6 +269,47 @@ Ideal Quantum Circuit
         ▼
    Final Output
 ```
+EV + GRID PROBLEM
+                        │
+                        ▼
+              Mathematical Model
+                        │
+          ┌─────────────┴─────────────┐
+          │                           │
+    Decision Variables           Constraints
+          │                           │
+          └─────────────┬─────────────┘
+                        ▼
+                 Objective Function
+                        │
+                        ▼
+                      QUBO
+                xᵀ Q x + offset
+                        │
+             ┌──────────┴──────────┐
+             │                     │
+      Classical Branch        Quantum Branch
+             │                     │
+      OR-Tools CP-SAT          QUBO → Ising
+      Greedy Heuristic              │
+      Simulated Annealing            ▼
+      Brute Force               QAOA Circuit
+             │                     │
+             │               H → Cost → Mixer
+             │                     │
+             │                     ▼
+             │                 Qiskit Aer
+             │                     │
+             │              Noise / ZNE
+             │                     │
+             └──────────┬──────────┘
+                        ▼
+                  Benchmarking
+                        │
+                        ▼
+             Cost / Peak / V2G /
+          Feasibility / Probability /
+             Runtime / Noise
 
 Understanding this gap between **ideal simulation** and **real-world quantum computation** is essential when evaluating quantum ML systems.
 
